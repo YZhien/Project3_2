@@ -1,0 +1,104 @@
+---
+title: "Project3 Tutorial"
+author: "Zhien Yu"
+output: html_document
+---
+
+---
+
+
+
+
+```{r setup}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(randomForest)
+#get my_penguins
+my_penguins <- read.csv('../Data/my_penguins.csv')
+```
+```{r}
+#source function my_rf_cv.R
+source('../Code/my_rf_cv.R')
+
+```
+```{r}
+# remove rows with any column with NA
+penguins_clean <- na.omit(my_penguins)
+
+```
+```{r}
+# creat new vectors
+x2 <- c()
+x5 <- c()
+x10 <- c()
+#For each of the 30
+# iterations, store the CV estimated MSE.
+for (i in c(1:30)) {
+ x2[i] <- my_rf_cv(2, my_penguins)
+ }
+  
+for (i in c(1:30)) {
+ x5[i] <- my_rf_cv(5, my_penguins)
+ }
+  
+for (i in c(1:30)) {
+ x10[i] <- my_rf_cv(10, my_penguins)
+ }
+
+
+```
+```{r, warning=FALSE}
+#make dataframe
+x2_df <- data.frame("x" = c(1:30), "y" <-x2)
+x5_df <- data.frame("x" = c(1:30), y <-x5)
+x10_df <- data.frame("x" = c(1:30), y <-x10)
+#plot
+g1 <- ggplot(data = x2_df,aes(x , y )) +
+  geom_boxplot() +
+  labs(x = "x", y = "error", title = "k=2")
+#save plots
+ggsave("k2boxplot.png", plot = last_plot(), path = "../Output/Figures")
+g2 <- ggplot(data = x5_df,aes(x , y )) +
+  geom_boxplot() +
+  labs(x = "x", y = "error", title = "k=5")
+#save plots
+ggsave("k5boxplot.png", plot = g2, path = "../Output/Figures")
+  
+g3 <-ggplot(data = x10_df,aes(x=x, y=y ,group_by(10,20))) +
+  geom_boxplot() +
+  labs(x = "x", y = "error", title = "k=10")
+#save plots
+ggsave("k10boxplot.png", plot = g3, path = "../Output/Figures")
+ 
+g1
+g2
+g3
+
+```
+
+
+```{r}
+#calculate mean
+mean_x2 <- mean(x2)
+mean_x5 <- mean(x5)
+mean_x10 <- mean(x10)
+#calculate sd
+sd_x2 <- sd(x2)
+sd_x5 <- sd(x5)
+sd_x10 <- sd(x10)
+ta <- matrix(c( mean_x2, sd_x2, mean_x5, sd_x5,  mean_x10, sd_x10), byrow = TRUE, nrow = 3, ncol = 2)
+# give names
+colnames(ta) <- c("mean", "Std. Error")
+rownames(ta) <- c(2,5,10)
+ta_table <- as.table(ta)
+#print table
+ta_table
+saveRDS(ta_table,"../Output/Results/table.rds")
+```
+```{r}
+x_df <- data.frame("x2" = x2, "x5" = x5, "x10" = x10)
+write_csv(x_df,'../Output/Results/simulation.csv')
+```
+
+We could find out that they have similar mean but similar k would have larger Std. Error, smaller k is more dispersed.
